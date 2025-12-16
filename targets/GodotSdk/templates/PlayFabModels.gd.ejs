@@ -1,0 +1,41 @@
+## PlayFab <%- api.name %> API - Data Models
+## Auto-generated on <%- sdkGlobals.buildIdentifier %>
+class_name PlayFab<%- api.name %>Models
+extends Object
+
+<% for(var d in api.datatypes) { 
+    var datatype = api.datatypes[d];
+    if (!datatype) continue;
+%>
+<%- generateApiSummary("", datatype, "description") %><%- getDeprecationAttribute("", datatype) %>class <%- datatype.name %>:
+<% if (datatype.properties && datatype.properties.length > 0) { 
+    for(var p in datatype.properties) { 
+        var property = datatype.properties[p];
+%><%- generateApiSummary("    ", property, "description") %><%- getDeprecationAttribute("    ", property) %>    var <%- property.name %><%- getPropertyTypeHint(property, datatype) %> <%- getPropertyDefaultValue(property) %>
+<% } 
+} else { %>    pass  ## Empty class - no properties
+<% } %>
+    
+    func _init(data: Dictionary = {}):
+        _from_dict(data)
+    
+    func _from_dict(data: Dictionary) -> void:
+        if data.is_empty():
+            return
+<% if (datatype.properties && datatype.properties.length > 0) { 
+    for(var p in datatype.properties) { 
+        var property = datatype.properties[p];
+        var propInit = getPropertyInitialization(property, datatype, api);
+%><%- propInit %>
+<% } } %>
+    
+    func to_dict() -> Dictionary:
+        var result = {}
+<% if (datatype.properties && datatype.properties.length > 0) { 
+    for(var p in datatype.properties) { 
+        var property = datatype.properties[p];
+%>        if <%- property.name %> != null:
+<%- getPropertySerialization(property, datatype, api) %>
+<% } } %>        return result
+
+<% } %>

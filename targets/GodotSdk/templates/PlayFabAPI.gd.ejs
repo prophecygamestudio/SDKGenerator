@@ -1,0 +1,28 @@
+class_name PlayFab<%- api.name %>API
+extends Object
+
+<%- generateApiSummary("", api, "description")
+%><% if (hasClientOptions) {
+%>
+## Determine if the client session ticket is set, without actually making it public
+static func is_client_logged_in() -> bool:
+    return PlayFabSettings._internal_settings.client_session_ticket != ""
+<% } %>
+<% for(var i in api.calls) { var apiCall = api.calls[i];
+%><%- getDeprecationAttribute("", apiCall)
+%>static func <%- apiCall.name %>(request: <%- getRequestClassName(apiCall, api) %>, callback: Callable) -> void:
+<%- generateApiSummary("    ", apiCall, "summary", "https://docs.microsoft.com/rest/api/playfab/" + api.name.toLowerCase() + "/" + apiCall.subgroup.toLowerCase().replaceAll(" ","-") + "/" + apiCall.name.toLowerCase())
+%>    var request_dict = request.to_dict() if request is Object and request.has_method("to_dict") else request
+<%- getRequestActions("    ", apiCall, "request_dict") 
+%>    var wrapped_callback = func(playfab_result, playfab_error) -> void:
+<%- getResultActions("        ", apiCall, api) 
+%>        if callback:
+            var typed_result = <%- getResultClassName(apiCall, api) %>.new(playfab_result) if playfab_result else null
+            callback.call(typed_result, playfab_error)
+    
+    PlayFabHTTP.do_post("<%- apiCall.url %>", request_dict, <%- getAuthParams(apiCall) %>, wrapped_callback)
+
+<% } %>
+
+
+

@@ -1,0 +1,47 @@
+class_name PlayFabErrors
+extends Object
+
+## PlayFab Error Codes and Error Handling
+
+enum PlayFabErrorCode {
+    SUCCESS = 0,
+    UNKNOWN = 1,
+    CONNECTION_ERROR = 2,
+    JSON_PARSE_ERROR = 3,<% for(var i=1; i<errorList.length-1; i++) { var errorProps = errors[errorList[i]] %>
+    <%- errorProps.name.toUpperCase().replace(/([a-z])([A-Z])/g, '$1_$2') %> = <%- errorProps.id %>,<% } %><% var errorProps = errors[errorList[errorList.length-1]] %>
+    <%- errorProps.name.toUpperCase().replace(/([a-z])([A-Z])/g, '$1_$2') %> = <%- errorProps.id %>
+}
+
+## PlayFab Error Class
+class PlayFabError:
+    var http_code: int = 408
+    var http_status: String = "Request Timeout"
+    var error: String = "ServiceUnavailable"
+    var error_code: int = PlayFabErrorCode.UNKNOWN
+    var error_message: String = "Unable to contact PlayFab server"
+    var error_details: Dictionary = {}
+    
+    func _init(error_dict: Dictionary = {}) -> void:
+        if error_dict:
+            from_json(error_dict)
+    
+    func from_json(data: Dictionary) -> void:
+        http_code = data.get("code", 408)
+        http_status = data.get("status", "Request Timeout")
+        error = data.get("error", "ServiceUnavailable")
+        error_code = data.get("errorCode", PlayFabErrorCode.UNKNOWN)
+        error_message = data.get("errorMessage", "Unable to contact PlayFab server")
+        error_details = data.get("errorDetails", {})
+    
+    func generate_error_report() -> String:
+        var report: String = error_message if error_message else ""
+        
+        if error_details:
+            for key in error_details:
+                report += "\n" + str(key) + ": " + str(error_details[key])
+        
+        return report
+    
+    func _to_string() -> String:
+        return generate_error_report()
+

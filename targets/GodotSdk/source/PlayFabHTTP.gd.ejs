@@ -1,0 +1,144 @@
+class_name PlayFabHTTP
+extends Object
+
+## PlayFab HTTP Handler
+## Handles all HTTP requests to PlayFab API using HTTPRequest nodes
+
+## Singleton autoload node reference - must be set by user
+static var http_container: Node = null
+
+## Make a POST request to PlayFab API
+## url_path: The API endpoint path
+## request: Dictionary of request data
+## auth_key: Authentication header key (e.g., "X-Authorization")
+## auth_value: Authentication header value (e.g., session ticket)
+## callback: Callable that takes (result: Dictionary, error: PlayFabError)
+static func do_post(url_path: String, request: Dictionary, auth_key: String, auth_value: String, callback: Callable) -> void:
+    if not http_container:
+        push_error("PlayFabHTTP.http_container must be set to a Node in the scene tree before making API calls")
+        if callback:
+            var error = PlayFabErrors.PlayFabError.new()
+            error.error = "HttpContainerNotSet"
+            error.error_message = "PlayFabHTTP.http_container must be set to a Node in the scene tree"
+            error.http_code = 0
+            callback.call(null, error)
+        return
+    
+    var url: String = PlayFabSettings.get_url(url_path, PlayFabSettings._internal_settings.request_get_params)
+    if not url:
+        if callback:
+            var error = PlayFabErrors.PlayFabError.new()
+            error.error = "InvalidUrl"
+            error.error_message = "Failed to build API URL"
+            error.http_code = 0
+            callback.call(null, error)
+        return
+    
+    # Create HTTPRequest node
+    var http_request: HTTPRequest = HTTPRequest.new()
+    http_container.add_child(http_request)
+    
+    # Build headers
+    var headers: PackedStringArray = PackedStringArray([
+        "Content-Type: application/json",
+        "X-PlayFabSDK: " + PlayFabSettings._internal_settings.sdk_version_string,
+        "X-ReportErrorAsSuccess: true"
+    ])
+    
+    if auth_key and auth_value:
+        headers.append(auth_key + ": " + auth_value)
+    
+    # Serialize request to JSON
+    var json_string: String = JSON.stringify(request)
+    
+    # Connect to request_completed signal
+    var on_request_completed = func(result: int, response_code: int, response_headers: PackedStringArray, body: PackedByteArray) -> void:
+        _handle_response(result, response_code, response_headers, body, callback)
+        # Clean up HTTPRequest node
+        http_request.queue_free()
+    
+    http_request.request_completed.connect(on_request_completed)
+    
+    # Make the request
+    var error: Error = http_request.request(url, headers, HTTPClient.METHOD_POST, json_string)
+    
+    if error != OK:
+        push_error("HTTPRequest failed to start: " + str(error))
+        http_request.queue_free()
+        if callback:
+            var playfab_error = PlayFabErrors.PlayFabError.new()
+            playfab_error.error = "ConnectionError"
+            playfab_error.error_message = "Failed to start HTTP request"
+            playfab_error.http_code = 0
+            callback.call(null, playfab_error)
+
+## Handle the HTTP response
+static func _handle_response(result: int, response_code: int, response_headers: PackedStringArray, body: PackedByteArray, callback: Callable) -> void:
+    var playfab_result = null
+    var playfab_error = null
+    
+    if result != HTTPRequest.RESULT_SUCCESS:
+        # HTTP request failed
+        playfab_error = PlayFabErrors.PlayFabError.new()
+        playfab_error.http_code = response_code
+        playfab_error.http_status = _get_http_status_text(response_code)
+        playfab_error.error = "ConnectionError"
+        playfab_error.error_message = "HTTP request failed with result: " + str(result)
+    elif response_code != 200:
+        # HTTP request succeeded but got non-200 status
+        playfab_error = PlayFabErrors.PlayFabError.new()
+        playfab_error.http_code = response_code
+        playfab_error.http_status = _get_http_status_text(response_code)
+        playfab_error.error = "ServiceUnavailable"
+        playfab_error.error_message = "HTTP " + str(response_code) + " error"
+    else:
+        # Parse response body
+        var body_string: String = body.get_string_from_utf8()
+        var json = JSON.new()
+        var parse_error = json.parse(body_string)
+        
+        if parse_error != OK:
+            playfab_error = PlayFabErrors.PlayFabError.new()
+            playfab_error.http_code = response_code
+            playfab_error.error = "JsonParseError"
+            playfab_error.error_message = "Failed to parse JSON response"
+        else:
+            var response_wrapper = json.data
+            
+            if typeof(response_wrapper) != TYPE_DICTIONARY:
+                playfab_error = PlayFabErrors.PlayFabError.new()
+                playfab_error.http_code = response_code
+                playfab_error.error = "JsonParseError"
+                playfab_error.error_message = "Response is not a valid JSON object"
+            elif response_wrapper.get("code", 0) != 200:
+                # PlayFab returned an error
+                playfab_error = PlayFabErrors.PlayFabError.new()
+                playfab_error.from_json(response_wrapper)
+            else:
+                # Successful PlayFab response
+                playfab_result = response_wrapper.get("data", {})
+    
+    # Call global error handler if there's an error
+    if playfab_error and PlayFabSettings.global_error_handler:
+        PlayFabSettings.global_error_handler.call(playfab_error)
+    
+    # Call the user's callback
+    if callback:
+        callback.call(playfab_result, playfab_error)
+
+## Get HTTP status text from code
+static func _get_http_status_text(code: int) -> String:
+    match code:
+        200: return "OK"
+        400: return "Bad Request"
+        401: return "Unauthorized"
+        403: return "Forbidden"
+        404: return "Not Found"
+        408: return "Request Timeout"
+        500: return "Internal Server Error"
+        502: return "Bad Gateway"
+        503: return "Service Unavailable"
+        _: return "HTTP " + str(code)
+
+
+

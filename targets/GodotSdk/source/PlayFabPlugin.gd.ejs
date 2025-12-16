@@ -1,0 +1,15 @@
+@tool
+extends EditorPlugin
+
+## PlayFab SDK Plugin for Godot 4.x
+## Version: <%- sdkVersion %>
+## This plugin provides PlayFab backend services integration for Godot games.
+
+func _enter_tree() -> void:
+    print("PlayFab SDK <%- sdkVersion %> loaded")
+
+func _exit_tree() -> void:
+    print("PlayFab SDK unloaded")
+
+
+

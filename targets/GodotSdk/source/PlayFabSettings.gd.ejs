@@ -1,0 +1,76 @@
+class_name PlayFabSettings
+extends Object
+
+## PlayFab SDK Settings
+## Global configuration for PlayFab API calls
+
+const PRODUCTION_ENVIRONMENT_URL: String = ".playfabapi.com"
+
+## The name of a customer vertical. This is only for customers running a private cluster.
+## Generally you shouldn't touch this.
+static var vertical_name: String = <%- getVerticalNameDefault() %>
+
+## You must set this value for PlayFabSdk to work properly
+## (Found in the Game Manager for your title, at the PlayFab Website)
+static var title_id: String = ""
+
+## You must set this value for Admin/Server/Matchmaker to work properly
+## (Found in the Game Manager for your title, at the PlayFab Website)
+static var developer_secret_key: String = ""
+
+## Internal settings class for session data
+class InternalSettings:
+    ## This is automatically populated by the PlayFabAuthenticationApi.GetEntityToken method.
+    var entity_token: String = ""
+    
+    ## This is automatically populated by any PlayFabClientApi.Login method.
+    var client_session_ticket: String = ""
+    
+    ## SDK version string
+    var sdk_version_string: String = "GodotSdk-<%- sdkVersion %>"
+    
+    ## Request GET parameters
+    var request_get_params: Dictionary = {
+        "sdk": "GodotSdk-<%- sdkVersion %>"
+    }
+
+static var _internal_settings: InternalSettings = InternalSettings.new()
+
+## Global error handler - can be set by user to handle all PlayFab errors
+static var global_error_handler: Callable = Callable()
+
+## Build the full URL for an API call
+static func get_url(method_url: String, get_params: Dictionary = {}) -> String:
+    if not title_id:
+        push_error("You must set PlayFabSettings.title_id before making an API call")
+        return ""
+    
+    var url_parts: Array = []
+    
+    if not PRODUCTION_ENVIRONMENT_URL.begins_with("http"):
+        if vertical_name:
+            url_parts.append("https://")
+            url_parts.append(vertical_name)
+        else:
+            url_parts.append("https://")
+            url_parts.append(title_id)
+    
+    url_parts.append(PRODUCTION_ENVIRONMENT_URL)
+    url_parts.append(method_url)
+    
+    if get_params:
+        var idx: int = 0
+        for key in get_params:
+            if idx == 0:
+                url_parts.append("?")
+            else:
+                url_parts.append("&")
+            url_parts.append(str(key))
+            url_parts.append("=")
+            url_parts.append(str(get_params[key]))
+            idx += 1
+    
+    return "".join(url_parts)
+
+
+
