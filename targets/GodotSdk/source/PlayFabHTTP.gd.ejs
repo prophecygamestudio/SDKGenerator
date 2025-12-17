@@ -38,6 +38,12 @@ static func do_post(url_path: String, request: Dictionary, auth_key: String, aut
 	var http_request: HTTPRequest = HTTPRequest.new()
 	http_container.add_child(http_request)
 	
+	# Configure HTTPRequest settings
+	http_request.timeout = 30.0  # 30 second timeout
+	http_request.body_size_limit = -1  # No body size limit
+	http_request.use_threads = false  # Disable threads to avoid compression issues
+	http_request.accept_gzip = false  # Disable gzip compression to avoid decompression errors
+	
 	# Build headers
 	var headers: PackedStringArray = PackedStringArray([
 		"Content-Type: application/json",
