@@ -4,44 +4,44 @@ extends Object
 ## PlayFab Error Codes and Error Handling
 
 enum PlayFabErrorCode {
-    SUCCESS = 0,
-    UNKNOWN = 1,
-    CONNECTION_ERROR = 2,
-    JSON_PARSE_ERROR = 3,<% for(var i=1; i<errorList.length-1; i++) { var errorProps = errors[errorList[i]] %>
-    <%- errorProps.name.toUpperCase().replace(/([a-z])([A-Z])/g, '$1_$2') %> = <%- errorProps.id %>,<% } %><% var errorProps = errors[errorList[errorList.length-1]] %>
-    <%- errorProps.name.toUpperCase().replace(/([a-z])([A-Z])/g, '$1_$2') %> = <%- errorProps.id %>
+	SUCCESS = 0,
+	UNKNOWN = 1,
+	CONNECTION_ERROR = 2,
+	JSON_PARSE_ERROR = 3,<% for(var i=1; i<errorList.length-1; i++) { var errorProps = errors[errorList[i]] %>
+	<%- errorProps.name.toUpperCase().replace(/([a-z])([A-Z])/g, '$1_$2') %> = <%- errorProps.id %>,<% } %><% var errorProps = errors[errorList[errorList.length-1]] %>
+	<%- errorProps.name.toUpperCase().replace(/([a-z])([A-Z])/g, '$1_$2') %> = <%- errorProps.id %>
 }
 
 ## PlayFab Error Class
 class PlayFabError:
-    var http_code: int = 408
-    var http_status: String = "Request Timeout"
-    var error: String = "ServiceUnavailable"
-    var error_code: int = PlayFabErrorCode.UNKNOWN
-    var error_message: String = "Unable to contact PlayFab server"
-    var error_details: Dictionary = {}
-    
-    func _init(error_dict: Dictionary = {}) -> void:
-        if error_dict:
-            from_json(error_dict)
-    
-    func from_json(data: Dictionary) -> void:
-        http_code = data["code"] if data.has("code") else 408
-        http_status = data["status"] if data.has("status") else "Request Timeout"
-        error = data["error"] if data.has("error") else "ServiceUnavailable"
-        error_code = data["errorCode"] if data.has("errorCode") else PlayFabErrorCode.UNKNOWN
-        error_message = data["errorMessage"] if data.has("errorMessage") else "Unable to contact PlayFab server"
-        error_details = data["errorDetails"] if data.has("errorDetails") else {}
-    
-    func generate_error_report() -> String:
-        var report: String = error_message if error_message else ""
-        
-        if error_details:
-            for key in error_details:
-                report += "\n" + str(key) + ": " + str(error_details[key])
-        
-        return report
-    
-    func _to_string() -> String:
-        return generate_error_report()
+	var http_code: int = 408
+	var http_status: String = "Request Timeout"
+	var error: String = "ServiceUnavailable"
+	var error_code: int = PlayFabErrorCode.UNKNOWN
+	var error_message: String = "Unable to contact PlayFab server"
+	var error_details: Dictionary = {}
+	
+	func _init(error_dict: Dictionary = {}) -> void:
+		if error_dict:
+			from_json(error_dict)
+	
+	func from_json(data: Dictionary) -> void:
+		http_code = data["code"] if data.has("code") else 408
+		http_status = data["status"] if data.has("status") else "Request Timeout"
+		error = data["error"] if data.has("error") else "ServiceUnavailable"
+		error_code = data["errorCode"] if data.has("errorCode") else PlayFabErrorCode.UNKNOWN
+		error_message = data["errorMessage"] if data.has("errorMessage") else "Unable to contact PlayFab server"
+		error_details = data["errorDetails"] if data.has("errorDetails") else {}
+	
+	func generate_error_report() -> String:
+		var report: String = error_message if error_message else ""
+		
+		if error_details:
+			for key in error_details:
+				report += "\n" + str(key) + ": " + str(error_details[key])
+		
+		return report
+	
+	func _to_string() -> String:
+		return generate_error_report()
 

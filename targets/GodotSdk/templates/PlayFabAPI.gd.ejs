@@ -6,32 +6,32 @@ extends Object
 %>
 ## Determine if the client session ticket is set, without actually making it public
 static func is_client_logged_in() -> bool:
-    return PlayFabSettings._internal_settings.client_session_ticket != ""
+	return PlayFabSettings._internal_settings.client_session_ticket != ""
 <% } %>
 <% for(var i in api.calls) { var apiCall = api.calls[i];
 %><%- getDeprecationAttribute("", apiCall)
 %>static func <%- apiCall.name %>(request, callback: Callable) -> void:
-<%- generateApiSummary("    ", apiCall, "summary", "https://docs.microsoft.com/rest/api/playfab/" + api.name.toLowerCase() + "/" + apiCall.subgroup.toLowerCase().replaceAll(" ","-") + "/" + apiCall.name.toLowerCase())
-%>    var request_dict: Dictionary
-    if request is Dictionary:
-        request_dict = request
-    elif typeof(request) == TYPE_OBJECT and request.has_method("to_dict"):
-        request_dict = request.to_dict()
-    else:
-        push_error("Invalid request type for <%- apiCall.name %>")
-        if callback:
-            callback.call(null, PlayFabErrors.PlayFabError.new({"error": "InvalidRequest", "errorMessage": "Request must be a Dictionary or typed request object"}))
-        return
-<%- getRequestActions("    ", apiCall, "request_dict") 
-%>    var wrapped_callback = func(playfab_result, playfab_error) -> void:
-<%- getResultActions("        ", apiCall, api) 
-%>        if callback:
-            var typed_result = null
-            if playfab_result:
-                <% if (apiCall.result) { %>typed_result = <%- getResultClassName(apiCall, api) %>.new(playfab_result)<% } else { %>typed_result = playfab_result<% } %>
-            callback.call(typed_result, playfab_error)
-    
-    PlayFabHTTP.do_post("<%- apiCall.url %>", request_dict, <%- getAuthParams(apiCall) %>, wrapped_callback)
+<%- generateApiSummary("\t", apiCall, "summary", "https://docs.microsoft.com/rest/api/playfab/" + api.name.toLowerCase() + "/" + apiCall.subgroup.toLowerCase().replaceAll(" ","-") + "/" + apiCall.name.toLowerCase())
+%>	var request_dict: Dictionary
+	if request is Dictionary:
+		request_dict = request
+	elif typeof(request) == TYPE_OBJECT and request.has_method("to_dict"):
+		request_dict = request.to_dict()
+	else:
+		push_error("Invalid request type for <%- apiCall.name %>")
+		if callback:
+			callback.call(null, PlayFabErrors.PlayFabError.new({"error": "InvalidRequest", "errorMessage": "Request must be a Dictionary or typed request object"}))
+		return
+<%- getRequestActions("\t", apiCall, "request_dict") 
+%>	var wrapped_callback = func(playfab_result, playfab_error) -> void:
+<%- getResultActions("\t\t", apiCall, api) 
+%>		if callback:
+			var typed_result = null
+			if playfab_result:
+				<% if (apiCall.result) { %>typed_result = <%- getResultClassName(apiCall, api) %>.new(playfab_result)<% } else { %>typed_result = playfab_result<% } %>
+			callback.call(typed_result, playfab_error)
+	
+	PlayFabHTTP.do_post("<%- apiCall.url %>", request_dict, <%- getAuthParams(apiCall) %>, wrapped_callback)
 
 <% } %>
 

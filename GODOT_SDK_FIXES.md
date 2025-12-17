@@ -2,7 +2,7 @@
 
 ## Issues Fixed
 
-This update fixes three critical issues with the Godot SDK generation:
+This update fixes four critical issues with the Godot SDK generation:
 
 ### 1. Native Class Name Conflicts
 **Problem:** Properties and classes named after Godot's native classes (e.g., `Container`, `Resource`, `Image`, `Time`, `OS`) were causing "shadows a native class" errors.
@@ -34,6 +34,14 @@ This update fixes three critical issues with the Godot SDK generation:
 - Added proper type checking with helpful error messages
 - Maintains backward compatibility with older code using Dictionary objects
 
+### 4. Indentation Consistency (Spaces vs Tabs)
+**Problem:** Generated GDScript files used spaces for indentation, but Godot's official style guide and parser require tabs for indentation. This caused "Parse Error: Used space character for indentation instead of tab" errors.
+
+**Solution:**
+- Updated all EJS templates to use tabs instead of spaces for indentation
+- Updated helper functions in `make.js` to generate code with tabs
+- All generated GDScript files now follow Godot's official style guide (tabs for indentation)
+
 ## Files Modified
 
 1. **`targets/GodotSdk/make.js`**
@@ -43,18 +51,31 @@ This update fixes three critical issues with the Godot SDK generation:
    - Updated `makeModels()` to sanitize API data before generation
    - Updated `getGDScriptType()` to use sanitized class names
    - Updated `getPropertyInitialization()` and `getPropertySerialization()` to use sanitized names
+   - **Updated `getRequestActions()` to use tabs instead of spaces**
+   - **Updated `getResultActions()` to use tabs instead of spaces**
 
 2. **`targets/GodotSdk/templates/PlayFabModels.gd.ejs`**
    - Updated to use `sanitizeClassName()` for class names
    - Updated to use `sanitizePropertyName()` for property names
    - Removed type hints from property declarations to avoid cyclic references
    - Simplified `_from_dict()` and `to_dict()` methods
+   - **Converted all indentation from spaces to tabs**
 
 3. **`targets/GodotSdk/templates/PlayFabAPI.gd.ejs`**
    - Changed API function signatures to accept untyped `request` parameter
    - Added proper type checking for both Dictionary and typed request objects
    - Improved error handling with descriptive messages
    - Fixed result creation to handle both cases properly
+   - **Converted all indentation from spaces to tabs**
+
+4. **`targets/GodotSdk/source/PlayFabHTTP.gd.ejs`**
+   - **Converted all indentation from spaces to tabs**
+
+5. **`targets/GodotSdk/source/PlayFabSettings.gd.ejs`**
+   - **Converted all indentation from spaces to tabs**
+
+6. **`targets/GodotSdk/source/PlayFabErrors.gd.ejs`**
+   - **Converted all indentation from spaces to tabs**
 
 ## How to Regenerate the SDK
 
@@ -81,8 +102,10 @@ This update fixes three critical issues with the Godot SDK generation:
 After regeneration, the SDK should:
 - ✅ Load without "shadows a native class" errors
 - ✅ Load without "Cyclic reference" errors
+- ✅ Load without "Parse Error: Used space character for indentation" errors
 - ✅ Accept both Dictionary and typed request objects in API calls
 - ✅ Work with existing game code that uses Dictionary objects
+- ✅ Follow Godot's official GDScript style guide (tabs for indentation)
 
 ## Breaking Changes
 

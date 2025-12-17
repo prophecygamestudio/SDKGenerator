@@ -143,63 +143,63 @@ function getRequestActions(tabbing, apiCall, requestVar) {
     if (apiCall.result === "LoginResult" || apiCall.request === "RegisterPlayFabUserRequest")
         return tabbing + "# Set TitleId from settings or request\n"
             + tabbing + "if PlayFabSettings.title_id:\n"
-            + tabbing + "    " + requestVar + "[\"TitleId\"] = PlayFabSettings.title_id\n"
+            + tabbing + "\t" + requestVar + "[\"TitleId\"] = PlayFabSettings.title_id\n"
             + tabbing + "elif " + requestVar + ".has(\"TitleId\"):\n"
-            + tabbing + "    " + requestVar + "[\"TitleId\"] = " + requestVar + "[\"TitleId\"]\n"
+            + tabbing + "\t" + requestVar + "[\"TitleId\"] = " + requestVar + "[\"TitleId\"]\n"
             + tabbing + "else:\n"
-            + tabbing + "    " + requestVar + "[\"TitleId\"] = \"\"\n"
+            + tabbing + "\t" + requestVar + "[\"TitleId\"] = \"\"\n"
             + tabbing + "\n"
             + tabbing + "if not " + requestVar + ".has(\"TitleId\") or not " + requestVar + "[\"TitleId\"]:\n"
-            + tabbing + "    push_error(\"Must have TitleId set to call this method\")\n"
-            + tabbing + "    if callback:\n"
-            + tabbing + "        callback.call(null, PlayFabErrors.PlayFabError.new({\"error\": \"InvalidRequest\", \"errorMessage\": \"Must have TitleId set\"}))\n"
-            + tabbing + "    return\n\n";
+            + tabbing + "\tpush_error(\"Must have TitleId set to call this method\")\n"
+            + tabbing + "\tif callback:\n"
+            + tabbing + "\t\tcallback.call(null, PlayFabErrors.PlayFabError.new({\"error\": \"InvalidRequest\", \"errorMessage\": \"Must have TitleId set\"}))\n"
+            + tabbing + "\treturn\n\n";
     if (apiCall.auth === "EntityToken")
         return tabbing + "if not PlayFabSettings._internal_settings.entity_token:\n"
-            + tabbing + "    push_error(\"Must call GetEntityToken before calling this method\")\n"
-            + tabbing + "    if callback:\n"
-            + tabbing + "        callback.call(null, PlayFabErrors.PlayFabError.new({\"error\": \"NotAuthenticated\", \"errorMessage\": \"Must call GetEntityToken first\"}))\n"
-            + tabbing + "    return\n\n";
+            + tabbing + "\tpush_error(\"Must call GetEntityToken before calling this method\")\n"
+            + tabbing + "\tif callback:\n"
+            + tabbing + "\t\tcallback.call(null, PlayFabErrors.PlayFabError.new({\"error\": \"NotAuthenticated\", \"errorMessage\": \"Must call GetEntityToken first\"}))\n"
+            + tabbing + "\treturn\n\n";
     if (apiCall.auth === "SessionTicket")
         return tabbing + "if not PlayFabSettings._internal_settings.client_session_ticket:\n"
-            + tabbing + "    push_error(\"Must be logged in to call this method\")\n"
-            + tabbing + "    if callback:\n"
-            + tabbing + "        callback.call(null, PlayFabErrors.PlayFabError.new({\"error\": \"NotAuthenticated\", \"errorMessage\": \"Must be logged in\"}))\n"
-            + tabbing + "    return\n\n";
+            + tabbing + "\tpush_error(\"Must be logged in to call this method\")\n"
+            + tabbing + "\tif callback:\n"
+            + tabbing + "\t\tcallback.call(null, PlayFabErrors.PlayFabError.new({\"error\": \"NotAuthenticated\", \"errorMessage\": \"Must be logged in\"}))\n"
+            + tabbing + "\treturn\n\n";
     if (apiCall.auth === "SecretKey")
         return tabbing + "if not PlayFabSettings.developer_secret_key:\n"
-            + tabbing + "    push_error(\"Must have DeveloperSecretKey set to call this method\")\n"
-            + tabbing + "    if callback:\n"
-            + tabbing + "        callback.call(null, PlayFabErrors.PlayFabError.new({\"error\": \"NotAuthenticated\", \"errorMessage\": \"Must have DeveloperSecretKey set\"}))\n"
-            + tabbing + "    return\n\n";
+            + tabbing + "\tpush_error(\"Must have DeveloperSecretKey set to call this method\")\n"
+            + tabbing + "\tif callback:\n"
+            + tabbing + "\t\tcallback.call(null, PlayFabErrors.PlayFabError.new({\"error\": \"NotAuthenticated\", \"errorMessage\": \"Must have DeveloperSecretKey set\"}))\n"
+            + tabbing + "\treturn\n\n";
     if (apiCall.url === "/Authentication/GetEntityToken")
         return tabbing + "var auth_key: String = \"\"\n"
             + tabbing + "var auth_value: String = \"\"\n"
             + tabbing + "if PlayFabSettings._internal_settings.entity_token:\n"
-            + tabbing + "    auth_key = \"X-EntityToken\"\n"
-            + tabbing + "    auth_value = PlayFabSettings._internal_settings.entity_token\n"
+            + tabbing + "\tauth_key = \"X-EntityToken\"\n"
+            + tabbing + "\tauth_value = PlayFabSettings._internal_settings.entity_token\n"
             + tabbing + "elif PlayFabSettings._internal_settings.client_session_ticket:\n"
-            + tabbing + "    auth_key = \"X-Authorization\"\n"
-            + tabbing + "    auth_value = PlayFabSettings._internal_settings.client_session_ticket\n"
+            + tabbing + "\tauth_key = \"X-Authorization\"\n"
+            + tabbing + "\tauth_value = PlayFabSettings._internal_settings.client_session_ticket\n"
             + tabbing + "elif PlayFabSettings.developer_secret_key:\n"
-            + tabbing + "    auth_key = \"X-SecretKey\"\n"
-            + tabbing + "    auth_value = PlayFabSettings.developer_secret_key\n\n";
+            + tabbing + "\tauth_key = \"X-SecretKey\"\n"
+            + tabbing + "\tauth_value = PlayFabSettings.developer_secret_key\n\n";
     return "";
 }
 
 function getResultActions(tabbing, apiCall, api) {
     if (apiCall.result === "LoginResult" || apiCall.result === "RegisterPlayFabUserResult")
         return tabbing + "if playfab_result:\n" 
-            + tabbing + "    if playfab_result.has(\"SessionTicket\"):\n"
-            + tabbing + "        PlayFabSettings._internal_settings.client_session_ticket = playfab_result[\"SessionTicket\"]\n"
-            + tabbing + "    if playfab_result.has(\"EntityToken\") and playfab_result[\"EntityToken\"].has(\"EntityToken\"):\n"
-            + tabbing + "        PlayFabSettings._internal_settings.entity_token = playfab_result[\"EntityToken\"][\"EntityToken\"]\n";
+            + tabbing + "\tif playfab_result.has(\"SessionTicket\"):\n"
+            + tabbing + "\t\tPlayFabSettings._internal_settings.client_session_ticket = playfab_result[\"SessionTicket\"]\n"
+            + tabbing + "\tif playfab_result.has(\"EntityToken\") and playfab_result[\"EntityToken\"].has(\"EntityToken\"):\n"
+            + tabbing + "\t\tPlayFabSettings._internal_settings.entity_token = playfab_result[\"EntityToken\"][\"EntityToken\"]\n";
     else if (apiCall.result === "GetEntityTokenResponse")
         return tabbing + "if playfab_result and playfab_result.has(\"EntityToken\"):\n"
-            + tabbing + "    PlayFabSettings._internal_settings.entity_token = playfab_result[\"EntityToken\"]\n";
+            + tabbing + "\tPlayFabSettings._internal_settings.entity_token = playfab_result[\"EntityToken\"]\n";
     else if (apiCall.result === "AuthenticateCustomIdResult")
         return tabbing + "if playfab_result and playfab_result.has(\"EntityToken\") and playfab_result[\"EntityToken\"].has(\"EntityToken\"):\n"
-            + tabbing + "    PlayFabSettings._internal_settings.entity_token = playfab_result[\"EntityToken\"][\"EntityToken\"]\n";
+            + tabbing + "\tPlayFabSettings._internal_settings.entity_token = playfab_result[\"EntityToken\"][\"EntityToken\"]\n";
     return "";
 }
 

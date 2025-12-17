@@ -12,33 +12,33 @@ extends Object
     for(var p in datatype.properties) { 
         var property = datatype.properties[p];
         var sanitizedPropName = sanitizePropertyName(property.name);
-%><%- generateApiSummary("    ", property, "description") %><%- getDeprecationAttribute("    ", property) %>    var <%- sanitizedPropName %> <%- getPropertyDefaultValue(property) %>
+%><%- generateApiSummary("\t", property, "description") %><%- getDeprecationAttribute("\t", property) %>	var <%- sanitizedPropName %> <%- getPropertyDefaultValue(property) %>
 <% } 
-} else { %>    pass  ## Empty class - no properties
+} else { %>	pass  ## Empty class - no properties
 <% } %>
-    
-    func _init(data: Dictionary = {}):
-        _from_dict(data)
-    
-    func _from_dict(data: Dictionary) -> void:
-        if data.is_empty():
-            return
+	
+	func _init(data: Dictionary = {}):
+		_from_dict(data)
+	
+	func _from_dict(data: Dictionary) -> void:
+		if data.is_empty():
+			return
 <% if (datatype.properties && datatype.properties.length > 0) { 
     for(var p in datatype.properties) { 
         var property = datatype.properties[p];
         var sanitizedPropName = sanitizePropertyName(property.name);
-%>        if data.has("<%- property.name %>"):
-            <%- sanitizedPropName %> = data["<%- property.name %>"]
+%>		if data.has("<%- property.name %>"):
+			<%- sanitizedPropName %> = data["<%- property.name %>"]
 <% } } %>
-    
-    func to_dict() -> Dictionary:
-        var result = {}
+	
+	func to_dict() -> Dictionary:
+		var result = {}
 <% if (datatype.properties && datatype.properties.length > 0) { 
     for(var p in datatype.properties) { 
         var property = datatype.properties[p];
         var sanitizedPropName = sanitizePropertyName(property.name);
-%>        if <%- sanitizedPropName %> != null:
-            result["<%- property.name %>"] = <%- sanitizedPropName %>
-<% } } %>        return result
+%>		if <%- sanitizedPropName %> != null:
+			result["<%- property.name %>"] = <%- sanitizedPropName %>
+<% } } %>		return result
 
 <% } %>
