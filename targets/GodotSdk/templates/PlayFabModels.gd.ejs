@@ -7,11 +7,12 @@ extends Object
     var datatype = api.datatypes[d];
     if (!datatype) continue;
 %>
-<%- generateApiSummary("", datatype, "description") %><%- getDeprecationAttribute("", datatype) %>class <%- datatype.name %>:
+<%- generateApiSummary("", datatype, "description") %><%- getDeprecationAttribute("", datatype) %>class <%- sanitizeClassName(datatype.name) %>:
 <% if (datatype.properties && datatype.properties.length > 0) { 
     for(var p in datatype.properties) { 
         var property = datatype.properties[p];
-%><%- generateApiSummary("    ", property, "description") %><%- getDeprecationAttribute("    ", property) %>    var <%- property.name %><%- getPropertyTypeHint(property, datatype) %> <%- getPropertyDefaultValue(property) %>
+        var sanitizedPropName = sanitizePropertyName(property.name);
+%><%- generateApiSummary("    ", property, "description") %><%- getDeprecationAttribute("    ", property) %>    var <%- sanitizedPropName %> <%- getPropertyDefaultValue(property) %>
 <% } 
 } else { %>    pass  ## Empty class - no properties
 <% } %>
@@ -25,8 +26,9 @@ extends Object
 <% if (datatype.properties && datatype.properties.length > 0) { 
     for(var p in datatype.properties) { 
         var property = datatype.properties[p];
-        var propInit = getPropertyInitialization(property, datatype, api);
-%><%- propInit %>
+        var sanitizedPropName = sanitizePropertyName(property.name);
+%>        if data.has("<%- property.name %>"):
+            <%- sanitizedPropName %> = data["<%- property.name %>"]
 <% } } %>
     
     func to_dict() -> Dictionary:
@@ -34,8 +36,9 @@ extends Object
 <% if (datatype.properties && datatype.properties.length > 0) { 
     for(var p in datatype.properties) { 
         var property = datatype.properties[p];
-%>        if <%- property.name %> != null:
-<%- getPropertySerialization(property, datatype, api) %>
+        var sanitizedPropName = sanitizePropertyName(property.name);
+%>        if <%- sanitizedPropName %> != null:
+            result["<%- property.name %>"] = <%- sanitizedPropName %>
 <% } } %>        return result
 
 <% } %>

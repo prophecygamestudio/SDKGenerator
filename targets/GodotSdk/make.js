@@ -53,8 +53,41 @@ function makeApi(api, sourceDir, apiOutputDir) {
 function makeModels(api, sourceDir, apiOutputDir) {
     console.log("Generating GDScript " + api.name + " models to " + apiOutputDir);
 
+    // Sanitize datatype and property names to avoid Godot native class conflicts
+    var sanitizedApi = JSON.parse(JSON.stringify(api)); // Deep clone
+    for (var d in sanitizedApi.datatypes) {
+        var datatype = sanitizedApi.datatypes[d];
+        if (!datatype) continue;
+        
+        // Sanitize datatype name
+        var originalName = datatype.name;
+        var sanitizedName = sanitizeClassName(originalName);
+        if (originalName !== sanitizedName) {
+            datatype.name = sanitizedName;
+            console.log("  Renamed class " + originalName + " to " + sanitizedName + " to avoid Godot native class conflict");
+        }
+        
+        // Sanitize property names
+        if (datatype.properties) {
+            for (var p = 0; p < datatype.properties.length; p++) {
+                var property = datatype.properties[p];
+                var originalPropName = property.name;
+                var sanitizedPropName = sanitizePropertyName(originalPropName);
+                if (originalPropName !== sanitizedPropName) {
+                    property.name = sanitizedPropName;
+                    console.log("  Renamed property " + originalPropName + " to " + sanitizedPropName + " in class " + datatype.name);
+                }
+                
+                // Update actualtype references for complex types
+                if (property.actualtype && godotReservedClassNamesLower.indexOf(property.actualtype.toLowerCase()) !== -1) {
+                    property.actualtype = sanitizeClassName(property.actualtype);
+                }
+            }
+        }
+    }
+
     var modelLocals = {
-        api: api,
+        api: sanitizedApi,
         sdkGlobals: sdkGlobals,
         getDeprecationAttribute: getDeprecationAttribute,
         generateApiSummary: generateApiSummary,
@@ -62,6 +95,8 @@ function makeModels(api, sourceDir, apiOutputDir) {
         getPropertyDefaultValue: getPropertyDefaultValue,
         getPropertyInitialization: getPropertyInitialization,
         getPropertySerialization: getPropertySerialization,
+        sanitizePropertyName: sanitizePropertyName,
+        sanitizeClassName: sanitizeClassName,
     };
 
     var modelTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFabModels.gd.ejs"));
@@ -190,6 +225,33 @@ function getResultClassName(apiCall, api) {
     return "PlayFab" + api.name + "Models." + apiCall.result;
 }
 
+// List of reserved Godot native class names that would cause shadowing errors
+var godotReservedClassNames = [
+    "Container", "Resource", "Image", "Time", "OS", "Node", "Object", 
+    "File", "Directory", "Thread", "Mutex", "Semaphore", "Engine",
+    "Input", "Camera", "Light", "Texture", "Material", "Shader",
+    "Animation", "AudioStream", "VideoStream", "PackedScene"
+];
+
+// List of reserved Godot native class names (lowercase for case-insensitive comparison)
+var godotReservedClassNamesLower = godotReservedClassNames.map(function(name) { return name.toLowerCase(); });
+
+// Sanitize property names that conflict with Godot native classes
+function sanitizePropertyName(propertyName) {
+    if (godotReservedClassNamesLower.indexOf(propertyName.toLowerCase()) !== -1) {
+        return propertyName + "_";  // Append underscore to avoid conflict
+    }
+    return propertyName;
+}
+
+// Sanitize class names that conflict with Godot native classes
+function sanitizeClassName(className) {
+    if (godotReservedClassNamesLower.indexOf(className.toLowerCase()) !== -1) {
+        return "PlayFab" + className;  // Prefix with PlayFab to avoid conflict
+    }
+    return className;
+}
+
 function getGDScriptType(property, datatype) {
     var propertyType = property.actualtype;
     
@@ -212,7 +274,7 @@ function getGDScriptType(property, datatype) {
         return "Dictionary";
     } else {
         // Complex type - another model class
-        return propertyType;
+        return sanitizeClassName(propertyType);
     }
 }
 
@@ -259,17 +321,18 @@ function getPropertyDefaultValue(property) {
 function getPropertyInitialization(property, datatype, api) {
     var tabbing = "        ";
     var propName = property.name;
+    var sanitizedPropName = sanitizePropertyName(propName);
     var output = "";
     
     if (property.collection === "array") {
         output += tabbing + "if data.has(\"" + propName + "\"):\n";
-        output += tabbing + "    " + propName + " = data[\"" + propName + "\"]\n";
+        output += tabbing + "    " + sanitizedPropName + " = data[\"" + propName + "\"]\n";
     } else if (property.collection === "map") {
         output += tabbing + "if data.has(\"" + propName + "\"):\n";
-        output += tabbing + "    " + propName + " = data[\"" + propName + "\"]\n";
+        output += tabbing + "    " + sanitizedPropName + " = data[\"" + propName + "\"]\n";
     } else {
         output += tabbing + "if data.has(\"" + propName + "\"):\n";
-        output += tabbing + "    " + propName + " = data[\"" + propName + "\"]\n";
+        output += tabbing + "    " + sanitizedPropName + " = data[\"" + propName + "\"]\n";
     }
     
     return output;
@@ -278,12 +341,13 @@ function getPropertyInitialization(property, datatype, api) {
 function getPropertySerialization(property, datatype, api) {
     var tabbing = "            ";
     var propName = property.name;
+    var sanitizedPropName = sanitizePropertyName(propName);
     var output = "";
     
     if (property.collection === "array" || property.collection === "map") {
-        output += tabbing + "result[\"" + propName + "\"] = " + propName + "\n";
+        output += tabbing + "result[\"" + propName + "\"] = " + sanitizedPropName + "\n";
     } else {
-        output += tabbing + "result[\"" + propName + "\"] = " + propName + "\n";
+        output += tabbing + "result[\"" + propName + "\"] = " + sanitizedPropName + "\n";
     }
     
     return output;
