@@ -26,12 +26,12 @@ class PlayFabError:
             from_json(error_dict)
     
     func from_json(data: Dictionary) -> void:
-        http_code = data.get("code", 408)
-        http_status = data.get("status", "Request Timeout")
-        error = data.get("error", "ServiceUnavailable")
-        error_code = data.get("errorCode", PlayFabErrorCode.UNKNOWN)
-        error_message = data.get("errorMessage", "Unable to contact PlayFab server")
-        error_details = data.get("errorDetails", {})
+        http_code = data["code"] if data.has("code") else 408
+        http_status = data["status"] if data.has("status") else "Request Timeout"
+        error = data["error"] if data.has("error") else "ServiceUnavailable"
+        error_code = data["errorCode"] if data.has("errorCode") else PlayFabErrorCode.UNKNOWN
+        error_message = data["errorMessage"] if data.has("errorMessage") else "Unable to contact PlayFab server"
+        error_details = data["errorDetails"] if data.has("errorDetails") else {}
     
     func generate_error_report() -> String:
         var report: String = error_message if error_message else ""

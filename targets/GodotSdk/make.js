@@ -106,8 +106,15 @@ function getRequestActions(tabbing, apiCall, requestVar) {
     requestVar = requestVar || "request";
     
     if (apiCall.result === "LoginResult" || apiCall.request === "RegisterPlayFabUserRequest")
-        return tabbing + requestVar + "[\"TitleId\"] = PlayFabSettings.title_id if PlayFabSettings.title_id else " + requestVar + ".get(\"TitleId\", \"\")\n"
-            + tabbing + "if not " + requestVar + ".get(\"TitleId\"):\n"
+        return tabbing + "# Set TitleId from settings or request\n"
+            + tabbing + "if PlayFabSettings.title_id:\n"
+            + tabbing + "    " + requestVar + "[\"TitleId\"] = PlayFabSettings.title_id\n"
+            + tabbing + "elif " + requestVar + ".has(\"TitleId\"):\n"
+            + tabbing + "    " + requestVar + "[\"TitleId\"] = " + requestVar + "[\"TitleId\"]\n"
+            + tabbing + "else:\n"
+            + tabbing + "    " + requestVar + "[\"TitleId\"] = \"\"\n"
+            + tabbing + "\n"
+            + tabbing + "if not " + requestVar + ".has(\"TitleId\") or not " + requestVar + "[\"TitleId\"]:\n"
             + tabbing + "    push_error(\"Must have TitleId set to call this method\")\n"
             + tabbing + "    if callback:\n"
             + tabbing + "        callback.call(null, PlayFabErrors.PlayFabError.new({\"error\": \"InvalidRequest\", \"errorMessage\": \"Must have TitleId set\"}))\n"

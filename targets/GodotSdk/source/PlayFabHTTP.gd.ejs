@@ -110,13 +110,13 @@ static func _handle_response(result: int, response_code: int, response_headers: 
                 playfab_error.http_code = response_code
                 playfab_error.error = "JsonParseError"
                 playfab_error.error_message = "Response is not a valid JSON object"
-            elif response_wrapper.get("code", 0) != 200:
+            elif (response_wrapper["code"] if response_wrapper.has("code") else 0) != 200:
                 # PlayFab returned an error
                 playfab_error = PlayFabErrors.PlayFabError.new()
                 playfab_error.from_json(response_wrapper)
             else:
                 # Successful PlayFab response
-                playfab_result = response_wrapper.get("data", {})
+                playfab_result = response_wrapper["data"] if response_wrapper.has("data") else {}
     
     # Call global error handler if there's an error
     if playfab_error and PlayFabSettings.global_error_handler:
